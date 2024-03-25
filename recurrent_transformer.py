@@ -4,16 +4,20 @@ import torch
 
 
 
-class recurrent_transfomer(nn.Module):
+class recurrent_transformer(nn.Module):
     def __init__(
             self,
             nb_layers, 
             vocab_size,
             token_size,
             hidden_length,
-            symbolic_length
+            symbolic_length,
+            gradient_horizon
     ):
-        super(recurrent_transfomer, self).__init__()
+        super(recurrent_transformer, self).__init__()
+
+        # hypers
+        self.gradient_horizon = gradient_horizon
 
         # transformer 
         decoder_layer = nn.TransformerDecoderLayer(d_model=token_size, nhead=4)

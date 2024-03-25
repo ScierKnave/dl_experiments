@@ -1,6 +1,6 @@
 import torch
 from transformers import GPT2Tokenizer
-import reccurent_transformer
+from recurrent_transformer import *
 
 
 def train_sequence(model, optimizer, loss_function, train_tokens, epochs, step_freq):
@@ -24,23 +24,23 @@ def train_sequence(model, optimizer, loss_function, train_tokens, epochs, step_f
 
 # getting data for training 
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-with open('experiments/shakespear.txt', 'r', encoding='utf-8') as file:
+with open('data/shakespear.txt', 'r', encoding='utf-8') as file:
     shakespear_corpus = file.read()
 tokens = tokenizer.encode(shakespear_corpus)
 print(tokens[:10])
 
 
 # training 
-model = reccurent_transformer(
+model = recurrent_transformer(
     nb_layers=2,
-    hidden_length=10,
-    hidden_size=512,
+    vocab_size=50257,
+    token_size=512,
     symbolic_length=10,
-    symbolic_size=512,
+    hidden_length=10,
     gradient_horizon=1
 )
-model = reccurent_transformer()
-optimizer = torch.optim.AdamW(model.params())
+
+optimizer = torch.optim.AdamW(model.parameters())
 loss_function = torch.nn.CrossEntropyLoss()
 
 
