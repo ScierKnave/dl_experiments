@@ -26,7 +26,7 @@ def train_sequence(model, optimizer, loss_function, train_tokens, sub_sq_length,
                 token = torch.tensor(batch_tokens[:, i], dtype=torch.long).unsqueeze(1) # (B, 1)
                 next_token = torch.tensor(batch_tokens[:, i + 1], dtype=torch.long) # (B)
                 next_token_hat = model(token) # (B, vocab_size)
-                print('next_token_hat', next_token_hat.shape) # ()
+                #print('next_token_hat', next_token_hat.shape) # ()
                 loss += loss_function(next_token_hat, next_token)
 
                 if i % step_freq == 0:
@@ -35,6 +35,7 @@ def train_sequence(model, optimizer, loss_function, train_tokens, sub_sq_length,
                     optimizer.step()
                     optimizer.zero_grad()
                     loss = 0
+                    print("Training on batch...")
         
 
 # getting data for training 
@@ -42,7 +43,6 @@ tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 with open('data/shakespear.txt', 'r', encoding='utf-8') as file:
     shakespear_corpus = file.read()
 tokens = torch.Tensor(tokenizer.encode(shakespear_corpus))
-print(tokens[:10])
 
 
 # training 
@@ -51,8 +51,8 @@ model = recurrent_transformer(
     batch_size=32,
     vocab_size=50257,
     token_size=512,
-    symbolic_length=10,
-    hidden_length=10,
+    symbolic_length=100,
+    hidden_length=100,
     gradient_horizon=1
 )
 
