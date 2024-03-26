@@ -53,7 +53,7 @@ model = recurrent_transformer(
     token_size=512,
     symbolic_length=100,
     hidden_length=100,
-    gradient_horizon=1
+    gradient_horizon=7
 )
 
 optimizer = torch.optim.AdamW(model.parameters())
