@@ -1,0 +1,33 @@
+# Ignore all model files
+*.model
+*.pt
+*.pth
+*.h5
+*.ckpt
+
+# Ignore directory where models are saved
+models/
+
+# Additionally, you might want to ignore other large file types commonly found in ML projects
+*.tar.gz
+*.zip
+*.rar
+
+# Ignore temporary files
+*.swp
+*.tmp
+
+# Ignore Python bytecode
+__pycache__/
+*.py[cod]
+
+# Ignore Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore configuration files that may contain sensitive information
+config.ini
+*.env
+
+# Ignore directories that contain compiled source files
+build/
+dist/
