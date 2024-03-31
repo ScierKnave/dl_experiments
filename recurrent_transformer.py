@@ -2,7 +2,7 @@
     import torch
     device = 'gpu' if torch.cuda.is_available() else 'cpu'
 
-
+#
 
     class recurrent_transformer(nn.Module):
         def __init__(
