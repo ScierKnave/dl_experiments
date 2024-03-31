@@ -3,7 +3,6 @@
     device = 'gpu' if torch.cuda.is_available() else 'cpu'
 
 #
-
     class recurrent_transformer(nn.Module):
         def __init__(
                 self,
@@ -16,7 +15,7 @@
                 symbolic_length,
                 gradient_horizon
         ):
-            super(recurrent_transformer, self).__init__()
+            super().__init__()
 
             # hypers
             self.gradient_horizon = gradient_horizon
@@ -35,8 +34,8 @@
             self.symbolic_out = nn.Linear(token_size*symbolic_length, vocab_size)
             self.hidden_out = nn.Linear(token_size*symbolic_length, token_size)
 
-        def autoregress(self, sequence, item,):
-            return torch.cat((sequence[:, 1:, :], item))
+        def autoregress(self, sequence, item):
+            return torch.cat((sequence[:, item.shape[1]:], item))
         
         def adjust_contexts(self, batch_size):
             # resets contexts with appropriate sizes
@@ -46,54 +45,54 @@
             self.batch_size = batch_size
 
 
-        def prompt(self, text, limit=50):
-            
+        def prompt(self, input_text, tokenizer, output_limit=50):
             # prompt the model
 
+            # prepare the model for evalution
             self.eval()
             if not self.batch_size == 1: self.adjust_contexts(1)
-            with torch.no_grad:
-                # TODO: complete
-                for token_gen in range(limit):
-                    # adjust with respect to input
-                    if symbols.dim() == 1: symbols = symbols.unsqueeze(0)
-                    symbols = self.embedding(symbols) # (B, S, 1) -> (B, S, T)
-                    B, S, T = symbols.shape
 
-                    self.autoregress(self.symbolic_context, symbols) # -> (B, S, T)
+            # condition on initial text
+            symbols = tokenizer.encode(input_text)
 
-                    pre_out = self.transformer(self.symbolic_context, self.symbolic_context) # -> (B, S, T)
-                    pre_out = pre_out.flatten(start_dim=1) # (B, S, T) -> (BS, T)
-                    s_out = self.symbolic_out(pre_out) 
-                    h_out = self.hidden_out(pre_out)
+            output_text = ""
 
-                    self.autoregress(self.hidden_context, h_out.unsqueeze(1)) # add thought to sequence
+            for _ in range(output_limit):
+                symbols = torch.argmax(self.forward(symbols)) # (1, 1)
+                output_text += tokenizer.decoder(symbols[0,0].item())
+
+            return output_text
+                    
 
 
         def forward(self, symbols):
             
-            # adjust with respect to input
+            # transform input
             if symbols.dim() == 1: symbols = symbols.unsqueeze(0)
             symbols = self.embedding(symbols) # (B, S, 1) -> (B, S, T)
             B, S, T = symbols.shape
 
+            # auto regress on symbols
             self.autoregress(self.symbolic_context, symbols) # -> (B, S, T)
 
+            # pass through network
             pre_out = self.transformer(self.symbolic_context, self.symbolic_context) # -> (B, S, T)
-            pre_out = pre_out.flatten(start_dim=1) # (B, S, T) -> (BS, T)
-            s_out = self.symbolic_out(pre_out) 
+            pre_out = pre_out.flatten(start_dim=1) # (B, S, T) -> (B, ST)
+            s_out = self.symbolic_out(pre_out) # (B, ST) -> (B, S)
             h_out = self.hidden_out(pre_out)
 
+            # autoregress on thoughts
             self.autoregress(self.hidden_context, h_out.unsqueeze(1)) # add thought to sequence
-            self.autoregress(self.hidden_counts, torch.zeros(self.batch_size, 1).to(device))
 
-            # make gradient cuts past the gradient horizons
-            for pos in range(self.hidden_length):
-                if self.hidden_counts[0, pos] > self.gradient_horizon:
-                    hidden = self.hidden_context[:, pos, :] # (B, 1, T)
-                    hidden = hidden.clone().detach() # (B, 1, T)
-                    self.hidden_context[:, pos, :] = hidden
 
+            if self.training:
+                # make gradient cuts past the gradient horizons
+                self.autoregress(self.hidden_counts, torch.zeros(self.batch_size, 1).to(device))
+                for pos in range(self.hidden_length):
+                    if self.hidden_counts[0, pos] > self.gradient_horizon:
+                        hidden = self.hidden_context[:, pos, :] # (B, 1, T)
+                        hidden = hidden.clone().detach() # (B, 1, T)
+                        self.hidden_context[:, pos, :] = hidden
 
             # return logit probabilities for each vocab bit
             return s_out

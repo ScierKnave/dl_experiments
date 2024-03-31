@@ -1,10 +1,23 @@
 import torch
 from transformers import GPT2Tokenizer
 from recurrent_transformer import *
+import yaml
+import datetime
 
-
-def train_sequence(model, optimizer, loss_function, train_tokens, sub_sq_length, batch_size, epochs, step_freq):
+def train_sequence(model, 
+                   optimizer, 
+                   loss_function, 
+                   train_tokens, 
+                   sub_sq_length, 
+                   batch_size, 
+                   epochs, 
+                   step_freq,
+                   model_save_freq
+                   ):
+    
     model.train()
+
+    grad_step_count = 0
 
     for epoch in range(epochs):
 
@@ -33,34 +46,33 @@ def train_sequence(model, optimizer, loss_function, train_tokens, sub_sq_length,
                     print('loss:', loss)
                     loss.backward()
                     optimizer.step()
+                    grad_step_count+=1
                     optimizer.zero_grad()
                     loss = 0
                     print("Training on batch...")
-        
+
+                if grad_step_count % model_save_freq == 0:
+                    current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                    save_path = f"model_{current_time}_step_{grad_step_count}.pt"
+                    torch.save(model, save_path)
+                    print(f"Saved model at step {grad_step_count} to {save_path}")
+
+
+# import configuration
+with open('config.yaml', 'r') as file:config = yaml.safe_load(file)
 
 # getting data for training 
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-with open('data/shakespear.txt', 'r', encoding='utf-8') as file:
-    shakespear_corpus = file.read()
+with open(**config['data']) as file: shakespear_corpus = file.read()
 tokens = torch.Tensor(tokenizer.encode(shakespear_corpus))
 
+# create model
+model = recurrent_transformer(**config['model'])
 
-# training 
-model = recurrent_transformer(
-    nb_layers=2,
-    batch_size=32,
-    vocab_size=50257,
-    token_size=512,
-    symbolic_length=100,
-    hidden_length=100,
-    gradient_horizon=7
-)
-
+# train the model
 optimizer = torch.optim.AdamW(model.parameters())
 loss_function = torch.nn.CrossEntropyLoss()
-
-
-train_sequence(model, optimizer, loss_function, tokens, epochs=1, sub_sq_length=400, batch_size=32, step_freq=100)
+train_sequence(**config['training'])
 
 
     
