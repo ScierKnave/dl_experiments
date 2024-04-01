@@ -1,0 +1,21 @@
+model:
+  nb_layers: 1
+  nb_heads: 1
+  batch_size: 1
+  vocab_size: 50257
+  token_size: 512
+  symbolic_length: 4
+  hidden_length: 4
+  gradient_horizon: 2
+
+training:
+  epochs: 1
+  sub_sq_length: 124
+  batch_size: 1
+  step_freq: 8
+  model_save_freq: 16
+
+data:
+  file: reccurent_transformer/shakespear.txt
+  mode: r
+  encoding: utf-8

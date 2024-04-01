@@ -1,5 +1,6 @@
 model:
   nb_layers: 2
+  nb_heads: 2
   batch_size: 32
   vocab_size: 50257
   token_size: 512
@@ -9,12 +10,12 @@ model:
 
 training:
   epochs: 1
-  sub_sequence_length: 400
+  sub_sq_length: 400
   batch_size: 32
   step_freq: 100
   model_save_freq: 20
 
 data:
-  file: data/shakespear.txt
+  file: reccurent_transformer/shakespear.txt
   mode: r
   encoding: utf-8
