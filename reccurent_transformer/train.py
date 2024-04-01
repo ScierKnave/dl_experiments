@@ -50,7 +50,7 @@ def train_sequence(model,
                 next_tokens_hat = model(tokens) # (B, vocab_size) unormalized probs
 
                 # add to error to loss
-                loss += loss_function(next_tokens_hat, next_tokens)
+                loss = loss + loss_function(next_tokens_hat, next_tokens)
 
                 if (i+1) % step_freq == 0:
                     print('loss:', loss)
